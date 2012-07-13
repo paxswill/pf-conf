@@ -17,8 +17,8 @@
 
 include luggage.make
 
-TITLE=pf-firewall
-REVERSE_DOMAIN=com.github.hjuutilainen
+TITLE = pf-firewall
+REVERSE_DOMAIN ?= com.github.hjuutilainen
 PAYLOAD=\
 	pack-Library-LaunchDaemons-$(REVERSE_DOMAIN).pf.plist\
 	pack-etc-$(REVERSE_DOMAIN).pf.conf\
