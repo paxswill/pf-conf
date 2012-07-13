@@ -15,7 +15,7 @@
 #   limitations under the License.
 # ==============================================================================
 
-include /usr/local/share/luggage/luggage.make
+include luggage.make
 
 TITLE=pf-firewall
 REVERSE_DOMAIN=com.github.hjuutilainen
@@ -29,14 +29,22 @@ PAYLOAD=\
 	pack-script-postflight\
 	pack-script-preflight
 
-PROCESSED_FILES = $(addprefix $(REVERSE_DOMAIN).pf.,conf macros plist rules)
-PROCESSED_FILES += pf-control.sh pf-restart.sh postflight preflight
+RENAMED_FILES = $(addprefix $(REVERSE_DOMAIN).pf.,conf macros plist rules)
+PROCESSED_FILES = $(RENAMED_FILES) pf-control.sh pf-restart.sh postflight preflight
 
 $(REVERSE_DOMAIN).%: domain_prefix.%
 	cp $< $@
 
 $(PROCESSED_FILES): %: %.in
 	m4 -P -D@DOMAIN_PREFIX@=$(REVERSE_DOMAIN) $< > $@
+
+cleanprocessed:
+	rm -fr $(PROCESSED_FILES)
+	rm -fr $(addsuffix .in,$(RENAMED_FILES))
+
+.PHONY: cleanprocessed
+clean: cleanprocessed
+superclean: cleanprocessed
 
 package_root: $(PROCESSED_FILES)
 
