@@ -1,3 +1,4 @@
+m4_changequote(`', `')dnl
 #!/bin/bash
 
 # ==============================================================================
@@ -21,7 +22,7 @@
 # ==============================================================================
 
 # Change to match the actual item (if needed):
-LAUNCHD_ITEM_NAME="com.github.hjuutilainen.pf"
+LAUNCHD_ITEM_NAME="@DOMAIN_PREFIX@.pf"
 
 LAUNCHCTL="/bin/launchctl"
 PFCTL="/sbin/pfctl"

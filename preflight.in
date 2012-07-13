@@ -1,3 +1,4 @@
+m4_changequote(`', `')dnl
 #!/bin/bash
 
 # ==============================================================================
@@ -19,7 +20,7 @@
 #   limitations under the License.
 # ==============================================================================
 
-ITEM_NAME="com.github.hjuutilainen.pf"
+ITEM_NAME="@DOMAIN_PREFIX@.pf"
 NOW=$(date +"%Y-%m-%d-%H%M%S")
 LAUNCHCTL="/bin/launchctl"
 PF_LAUNCH_DAEMON="$3/Library/LaunchDaemons/$ITEM_NAME.plist"
@@ -30,15 +31,15 @@ mkdir $BACKUP_DIR
 # Define the items to backup
 # =================================================
 FILES_TO_BACKUP=(
-"$3/etc/com.github.hjuutilainen.pf.conf"
-"$3/etc/pf.anchors/com.github.hjuutilainen.pf.rules"
-"$3/etc/pf.anchors/com.github.hjuutilainen.pf.macros"
-"$3/etc/pf.anchors/com.github.hjuutilainen.pf.custom"
+"$3/etc/@DOMAIN_PREFIX@.pf.conf"
+"$3/etc/pf.anchors/@DOMAIN_PREFIX@.pf.rules"
+"$3/etc/pf.anchors/@DOMAIN_PREFIX@.pf.macros"
+"$3/etc/pf.anchors/@DOMAIN_PREFIX@.pf.custom"
 "$3/etc/pf.conf"
 PF_LAUNCH_DAEMON
 )
 DIRECTORIES_TO_BACKUP=(
-"$3/etc/pf.anchors/com.github.hjuutilainen.pf.d"
+"$3/etc/pf.anchors/@DOMAIN_PREFIX@.pf.d"
 )
 
 # =================================================

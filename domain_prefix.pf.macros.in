@@ -1,5 +1,6 @@
+m4_changequote(`', `')dnl
 # =====================================================
-#   com.github.hjuutilainen.pf.macros
+#   @DOMAIN_PREFIX@.pf.macros
 #
 #   Macros for Packet Filter
 #
