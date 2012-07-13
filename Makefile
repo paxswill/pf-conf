@@ -29,6 +29,9 @@ PAYLOAD=\
 	pack-script-postflight\
 	pack-script-preflight
 
+$(REVERSE_DOMAIN).%: domain_prefix.%
+	cp $< $@
+
 modify_packageroot:
 	# Create a customrules directory
 	@sudo mkdir -p ${WORK_D}/private/etc/pf.anchors/$(REVERSE_DOMAIN).pf.d
