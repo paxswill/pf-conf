@@ -3,7 +3,7 @@
 <plist version="1.0">
 	<dict>
 		<key>Label</key>
-		<string>com.github.hjuutilainen.pf</string>
+		<string>@DOMAIN_PREFIX@.pf</string>
 		<key>Program</key>
 		<string>/usr/local/bin/pf-control.sh</string>
 		<key>ProgramArguments</key>

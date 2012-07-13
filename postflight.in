@@ -24,12 +24,12 @@ echo $SCRIPT_NAME: Starting
 # ===========================================
 # Create a rule template if it doesn't exist
 # ===========================================
-CUSTOM_RULE_FILE="$3/etc/pf.anchors/com.github.hjuutilainen.pf.custom"
+CUSTOM_RULE_FILE="$3/etc/pf.anchors/@DOMAIN_PREFIX@.pf.custom"
 if [[ ! -f $CUSTOM_RULE_FILE ]]; then
     echo $SCRIPT_NAME: Creating example custom rules file $CUSTOM_RULE_FILE
     echo "# =====================================" >> $CUSTOM_RULE_FILE
     echo "# Custom rules for pf firewall" >> $CUSTOM_RULE_FILE
-    echo "# Macros: /etc/pf.anchors/com.github.hjuutilainen.pf.macros"
+    echo "# Macros: /etc/pf.anchors/@DOMAIN_PREFIX@.pf.macros"
     echo "# =====================================" >> $CUSTOM_RULE_FILE
     echo "" >> $CUSTOM_RULE_FILE
     echo "# Example rule" >> $CUSTOM_RULE_FILE
@@ -40,7 +40,7 @@ fi
 # ============================================
 # Create a directory for other custom files
 # ============================================
-CUSTOM_RULE_DIR="$3/etc/pf.anchors/com.github.hjuutilainen.pf.d"
+CUSTOM_RULE_DIR="$3/etc/pf.anchors/@DOMAIN_PREFIX@.pf.d"
 if [[ ! -d "$CUSTOM_RULE_DIR" ]]; then
     mkdir "$CUSTOM_RULE_DIR"
     chown root:wheel "$CUSTOM_RULE_DIR"

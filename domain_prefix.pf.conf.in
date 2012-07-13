@@ -1,5 +1,5 @@
 # =====================================================
-#   com.github.hjuutilainen.pf.conf
+#   @DOMAIN_PREFIX@.pf.conf
 #
 #   Packet Filter configuration file
 #
@@ -16,7 +16,7 @@
 include "/etc/pf.conf"
 
 #
-# com.github.hjuutilainen.pf anchor point
+# @DOMAIN_PREFIX@.pf anchor point
 #
-anchor "com.github.hjuutilainen.pf"
-load anchor "com.github.hjuutilainen.pf" from "/etc/pf.anchors/com.github.hjuutilainen.pf.rules"
+anchor "@DOMAIN_PREFIX@.pf"
+load anchor "@DOMAIN_PREFIX@.pf" from "/etc/pf.anchors/@DOMAIN_PREFIX@.pf.rules"

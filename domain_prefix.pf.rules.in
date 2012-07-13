@@ -1,5 +1,5 @@
 # =====================================================
-#   com.github.hjuutilainen.pf.rules
+#   @DOMAIN_PREFIX@.pf.rules
 #
 #   Packet Filter defaults
 #
@@ -10,7 +10,7 @@
 # =====================================================
 #   Macros
 # =====================================================
-include "/etc/pf.anchors/com.github.hjuutilainen.pf.macros"
+include "/etc/pf.anchors/@DOMAIN_PREFIX@.pf.macros"
 
 # =====================================================
 #   Filter rules
