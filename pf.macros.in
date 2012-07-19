@@ -1,6 +1,5 @@
-m4_changequote(`', `')dnl
 # =====================================================
-#   @DOMAIN_PREFIX@.pf.macros
+#   REVERSE_DOMAIN.pf.macros
 #
 #   Macros for Packet Filter
 #

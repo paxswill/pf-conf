@@ -15,65 +15,103 @@
 #   limitations under the License.
 # ==============================================================================
 
-include luggage.make
-
 TITLE = pf-firewall
 REVERSE_DOMAIN ?= com.github.hjuutilainen
-PAYLOAD=\
-	pack-Library-LaunchDaemons-$(REVERSE_DOMAIN).pf.plist\
-	pack-etc-$(REVERSE_DOMAIN).pf.conf\
-	pack-private-etc-pf.anchors-$(REVERSE_DOMAIN).pf.rules\
-	pack-private-etc-pf.anchors-$(REVERSE_DOMAIN).pf.macros\
-	pack-usr-local-bin-pf-control.sh\
-	pack-usr-local-bin-pf-restart.sh\
-	pack-script-postflight\
-	pack-script-preflight
 
-RENAMED_FILES = $(addprefix $(REVERSE_DOMAIN).pf.,conf macros plist rules)
-PROCESSED_FILES = $(RENAMED_FILES) pf-control.sh pf-restart.sh postflight preflight
+# Find the tools required to build the packages
+PKGBUILD := $(shell which pkgbuild)
+PKGBUILD ?= $(shell xcrun -find pkgbuild)
+PRODUCTBUILD := $(shell which productbuild)
+PRODUCTBUILD ?= $(shell xcrun -find productbuild)
+PRODUCTSIGN := $(shell which productsign)
+PRODUCTSIGN ?= $(shell xcrun -find productsign)
 
-$(REVERSE_DOMAIN).%: domain_prefix.%
-	cp $< $@
+# Try finding a default code signing identity
+SIGNER := $(shell security find-identity -p codesigning -v | grep -o -e '".*"$$')
 
-$(PROCESSED_FILES): %: %.in
-	m4 -P -D@DOMAIN_PREFIX@=$(REVERSE_DOMAIN) $< > $@
+# M4 input files
+M4PREP = "m4_define(\`TITLE',\`$(TITLE)')m4_define(\`REVERSE_DOMAIN',\`$(REVERSE_DOMAIN)')m4_changequote(\`',\`')m4_dnl"
+M4FILES := $(subst .in,,$(wildcard *.in))
+$(info M4Files: $(M4FILES))
+intermediates := $(M4FILES)
+%: %.in
+	echo $(M4PREP) | cat - $< | m4 -P - > $@
 
-cleanprocessed:
-	rm -fr $(PROCESSED_FILES)
-	rm -fr $(addsuffix .in,$(RENAMED_FILES))
+%.d:
+	mkdir -p $@
 
-.PHONY: cleanprocessed
-clean: cleanprocessed
-superclean: cleanprocessed
+# A canned recipe for staging
+stage = mkdir -p $(dir $@) && cp $< $@
 
-package_root: $(PROCESSED_FILES)
+# Set up destroot
+DESTROOT := destroot
 
-modify_packageroot:
-	# Create a customrules directory
-	@sudo mkdir -p ${WORK_D}/private/etc/pf.anchors/$(REVERSE_DOMAIN).pf.d
-	@sudo chown root:wheel ${WORK_D}/private/etc/pf.anchors/$(REVERSE_DOMAIN).pf.d
-	@sudo chmod 755 ${WORK_D}/private/etc/pf.anchors/$(REVERSE_DOMAIN).pf.d
-	# Clear extended attributes
-	@sudo xattr -c ${WORK_D}/private/etc/$(REVERSE_DOMAIN).pf.conf
-	@sudo xattr -c ${WORK_D}/private/etc/pf.anchors/$(REVERSE_DOMAIN).pf.rules
-	@sudo xattr -c ${WORK_D}/private/etc/pf.anchors/$(REVERSE_DOMAIN).pf.macros
-	@sudo xattr -c ${WORK_D}/usr/local/bin/pf-control.sh
-	@sudo xattr -c ${WORK_D}/usr/local/bin/pf-restart.sh
-	@sudo xattr -c ${WORK_D}/Library/LaunchDaemons/$(REVERSE_DOMAIN).pf.plist
+# Stage the launchd property list
+$(DESTROOT)/Library/LaunchDaemons/$(REVERSE_DOMAIN).pf.plist: pf.plist
+	$(stage)
 
-prep-private-etc-pf.anchors: l_private_etc
-	@sudo mkdir -p ${WORK_D}/private/etc/pf.anchors
-	@sudo chown root:wheel ${WORK_D}/private/etc/pf.anchors
-	@sudo chmod 755 ${WORK_D}/private/etc/pf.anchors
+# Stage the anchors
+anchors := $(DESTROOT)/etc/pf.anchors/$(REVERSE_DOMAIN)
+staged_anchors := $(addprefix $(anchors).pf.,macros rules)
+STAGED += $(staged_anchors)
+$(staged_anchors): $(anchors).%: %
+	$(stage)
+STAGED += $(anchors).pf.d
+$(anchors).pf.d:
 
-pack-private-etc-pf.anchors-$(REVERSE_DOMAIN).pf.rules: prep-private-etc-pf.anchors
-	@sudo ${CP} $(REVERSE_DOMAIN).pf.rules ${WORK_D}/private/etc/pf.anchors
-	@sudo chown root:wheel ${WORK_D}/private/etc/pf.anchors/$(REVERSE_DOMAIN).pf.rules
-	@sudo chmod 644 ${WORK_D}/private/etc/pf.anchors/$(REVERSE_DOMAIN).pf.rules
-	
-pack-private-etc-pf.anchors-$(REVERSE_DOMAIN).pf.macros: prep-private-etc-pf.anchors
-	@sudo ${CP} $(REVERSE_DOMAIN).pf.macros ${WORK_D}/private/etc/pf.anchors
-	@sudo chown root:wheel ${WORK_D}/private/etc/pf.anchors/$(REVERSE_DOMAIN).pf.macros
-	@sudo chmod 644 ${WORK_D}/private/etc/pf.anchors/$(REVERSE_DOMAIN).pf.macros
-	
+# Stage the admin commands
+# Cancel conflicting builtin rules
+.SUFFIXES:
+libexec := $(DESTROOT)/usr/local/libexec
+cmds := $(addprefix pf-,$(addsuffix .sh,control restart))
+staged_libexec := $(addprefix $(libexec)/,$(cmds))
+STAGED += $(staged_libexec)
+$(staged_libexec): $(libexec)/%: %
+	$(stage)
+	chmod +x $@
+
+# Stage the main pf.conf file
+STAGED += $(DESTROOT)/etc/$(REVERSE_DOMAIN).pf.conf
+$(DESTROOT)/etc/$(REVERSE_DOMAIN).pf.conf: pf.conf
+	$(stage)
+
+# Stage the installer scripts
+SCRIPTSDIR := scripts
+scripts := postinstall preinstall
+STAGED += $(addprefix $(SCRIPTSDIR)/,$(scripts))
+$(addprefix $(SCRIPTSDIR)/,$(scripts)): $(SCRIPTSDIR)/%: %
+	$(stage)
+	chmod +x $@
+
+# Generate the component package
+intermediates += $(TITLE)-component.pkg
+$(TITLE)-component.pkg: $(STAGED)
+	pkgbuild --root destroot\
+		--scripts scripts \
+		--identifier $(REVERSE_DOMAIN).$(TITLE) \
+		--version 1.0.0 \
+		--ownership recommended \
+		$(TITLE)-component.pkg
+
+# Generate the final product
+$(TITLE).pkg: $(TITLE)-component.pkg distribution.xml
+	$(PRODUCTBUILD) \
+		--distribution distribution.xml \
+		--identifier $(REVERSE_DOMAIN).$(TITLE) \
+		--version 1.0.0 \
+		$@
+
+# Generate a signed package
+%-signed.pkg: %.pkg
+	$(PRODUCTSIGN) --sign "$(SIGNER)" $< $@
+
+clean:
+	rm -rf $(DESTROOT) $(SCRIPTSDIR) *.pkg
+
+package: $(TITLE).pkg
+signed-package: $(TITLE)-signed.pkg
+
+.PHONY: clean package signed-package
+.DEFAULT_GOAL = package
+.INTERMEDIATE: $(intermediates)
 

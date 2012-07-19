@@ -1,4 +1,3 @@
-m4_changequote(`', `')dnl
 #!/bin/bash
 
 # ==============================================================================
@@ -24,10 +23,10 @@ m4_changequote(`', `')dnl
 # ========================================
 # Declare variables
 # ========================================
-DEFAULT_RULES_FILE="/etc/pf.anchors/@DOMAIN_PREFIX@.pf.rules"
-MACROS_FILE="/etc/pf.anchors/@DOMAIN_PREFIX@.pf.macros"
-CUSTOM_RULES_FILE="/etc/pf.anchors/@DOMAIN_PREFIX@.pf.custom"
-CONF_DIR_CUSTOM="/etc/pf.anchors/@DOMAIN_PREFIX@.pf.d"
+DEFAULT_RULES_FILE="/etc/pf.anchors/REVERSE_DOMAIN.pf.rules"
+MACROS_FILE="/etc/pf.anchors/REVERSE_DOMAIN.pf.macros"
+CUSTOM_RULES_FILE="/etc/pf.anchors/REVERSE_DOMAIN.pf.custom"
+CONF_DIR_CUSTOM="/etc/pf.anchors/REVERSE_DOMAIN.pf.d"
 PFCTL="/sbin/pfctl"
 ECHO="/bin/echo"
 STAT="/usr/bin/stat"
@@ -109,7 +108,7 @@ function verifyFiles () {
     if [[ -d $CONF_DIR_CUSTOM ]]; then
     shopt -s nullglob
     DID_FIND_CUSTOMRULE_FILES=0
-    CUSTOM_RULES=/etc/pf.anchors/@DOMAIN_PREFIX@.custom.d/*
+    CUSTOM_RULES=/etc/pf.anchors/REVERSE_DOMAIN.custom.d/*
     for f in $CUSTOM_RULES
     do
         OBJECT=$f
@@ -131,7 +130,7 @@ function enablePfctl () {
     $ECHO ""
     $ECHO "Starting Packet Filter and reading default rules"
     $PFCTL -E > /dev/null 2>&1
-    $PFCTL -f /etc/@DOMAIN_PREFIX@.pf.conf > /dev/null 2>&1
+    $PFCTL -f /etc/REVERSE_DOMAIN.pf.conf > /dev/null 2>&1
 }
 
 # ========================================
@@ -159,7 +158,7 @@ function loadCustomRules () {
     
     # Add each file in custom rule directory
     $ECHO ""
-    $ECHO "Loading rule files in /etc/pf.anchors/@DOMAIN_PREFIX@.pf.d/"
+    $ECHO "Loading rule files in /etc/pf.anchors/REVERSE_DOMAIN.pf.d/"
     shopt -s nullglob
     DID_FIND_CUSTOMRULE_FILES=0
     CUSTOM_RULES=$CONF_DIR_CUSTOM/*
@@ -176,7 +175,7 @@ function loadCustomRules () {
     
     # Read all files that passed permissions check
     # and feed the results to pfctl
-    cat ${FILES_TO_LOAD[@]} | $PFCTL -a "@DOMAIN_PREFIX@.pf/custom" -f- > /dev/null 2>&1
+    cat ${FILES_TO_LOAD[@]} | $PFCTL -a "REVERSE_DOMAIN.pf/custom" -f- > /dev/null 2>&1
 }
 
 # ========================================

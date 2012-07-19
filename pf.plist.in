@@ -1,15 +1,12 @@
-m4_changequote(`', `')dnl
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 	<dict>
 		<key>Label</key>
-		<string>@DOMAIN_PREFIX@.pf</string>
-		<key>Program</key>
-		<string>/usr/local/bin/pf-control.sh</string>
+		<string>REVERSE_DOMAIN.pf</string>
 		<key>ProgramArguments</key>
 		<array>
-			<string>/usr/local/bin/pf-control.sh</string>
+			<string>/usr/local/libexec/pf-control.sh</string>
 			<string>restart</string>
 		</array>
 		<key>RunAtLoad</key>
