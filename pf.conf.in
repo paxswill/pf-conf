@@ -19,4 +19,4 @@ include "/etc/pf.conf"
 # REVERSE_DOMAIN.pf anchor point
 #
 anchor "REVERSE_DOMAIN.pf"
-load anchor "REVERSE_DOMAIN.pf" from "/etc/pf.anchors/REVERSE_DOMAIN.pf.rules"
+load anchor "REVERSE_DOMAIN.pf" from "/etc/pf.anchors/REVERSE_DOMAIN.rules"

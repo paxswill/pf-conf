@@ -10,7 +10,7 @@
 # =====================================================
 #   Macros
 # =====================================================
-include "/etc/pf.anchors/REVERSE_DOMAIN.pf.macros"
+include "/etc/pf.anchors/REVERSE_DOMAIN.macros"
 
 # =====================================================
 #   Filter rules

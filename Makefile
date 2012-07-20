@@ -37,9 +37,6 @@ intermediates := $(M4FILES)
 %: %.in
 	echo $(M4PREP) | cat - $< | m4 -P - > $@
 
-%.d:
-	mkdir -p $@
-
 # A canned recipe for staging
 stage = mkdir -p $(dir $@) && cp $< $@
 
@@ -52,12 +49,13 @@ $(DESTROOT)/Library/LaunchDaemons/$(REVERSE_DOMAIN).pf.plist: pf.plist
 
 # Stage the anchors
 anchors := $(DESTROOT)/etc/pf.anchors/$(REVERSE_DOMAIN)
-staged_anchors := $(addprefix $(anchors).pf.,macros rules)
+staged_anchors := $(addprefix $(anchors).,macros rules)
 STAGED += $(staged_anchors)
 $(staged_anchors): $(anchors).%: %
 	$(stage)
-STAGED += $(anchors).pf.d
-$(anchors).pf.d:
+STAGED += $(anchors).d
+$(anchors).d:
+	mkdir -p $@
 
 # Stage the admin commands
 # Cancel conflicting builtin rules

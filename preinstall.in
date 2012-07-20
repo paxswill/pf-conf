@@ -31,14 +31,14 @@ mkdir $BACKUP_DIR
 # =================================================
 FILES_TO_BACKUP=(
 "$3/etc/REVERSE_DOMAIN.pf.conf"
-"$3/etc/pf.anchors/REVERSE_DOMAIN.pf.rules"
-"$3/etc/pf.anchors/REVERSE_DOMAIN.pf.macros"
-"$3/etc/pf.anchors/REVERSE_DOMAIN.pf.custom"
+"$3/etc/pf.anchors/REVERSE_DOMAIN.rules"
+"$3/etc/pf.anchors/REVERSE_DOMAIN.macros"
+"$3/etc/pf.anchors/REVERSE_DOMAIN.custom"
 "$3/etc/pf.conf"
 PF_LAUNCH_DAEMON
 )
 DIRECTORIES_TO_BACKUP=(
-"$3/etc/pf.anchors/REVERSE_DOMAIN.pf.d"
+"$3/etc/pf.anchors/REVERSE_DOMAIN.d"
 )
 
 # =================================================

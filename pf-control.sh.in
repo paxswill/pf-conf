@@ -23,10 +23,10 @@
 # ========================================
 # Declare variables
 # ========================================
-DEFAULT_RULES_FILE="/etc/pf.anchors/REVERSE_DOMAIN.pf.rules"
-MACROS_FILE="/etc/pf.anchors/REVERSE_DOMAIN.pf.macros"
-CUSTOM_RULES_FILE="/etc/pf.anchors/REVERSE_DOMAIN.pf.custom"
-CONF_DIR_CUSTOM="/etc/pf.anchors/REVERSE_DOMAIN.pf.d"
+DEFAULT_RULES_FILE="/etc/pf.anchors/REVERSE_DOMAIN.rules"
+MACROS_FILE="/etc/pf.anchors/REVERSE_DOMAIN.macros"
+CUSTOM_RULES_FILE="/etc/pf.anchors/REVERSE_DOMAIN.custom"
+CONF_DIR_CUSTOM="/etc/pf.anchors/REVERSE_DOMAIN.d"
 TOKEN_FILE="/var/run/REVERSE_DOMAIN.pf.token"
 PFCTL="/sbin/pfctl"
 ECHO="/bin/echo"
@@ -110,7 +110,7 @@ function verifyFiles () {
     if [[ -d $CONF_DIR_CUSTOM ]]; then
     shopt -s nullglob
     DID_FIND_CUSTOMRULE_FILES=0
-    CUSTOM_RULES=/etc/pf.anchors/REVERSE_DOMAIN.custom.d/*
+    CUSTOM_RULES="${CONF_DIR_CUSTOM}/*"
     for f in $CUSTOM_RULES
     do
         OBJECT=$f
@@ -142,7 +142,7 @@ function disablePfctl () {
 # ========================================
     $ECHO ""
     $ECHO "Disabling Packet Filter"
-    if [[ -r /var/run/REVERSE_DOMAIN.pf.token ]]; then
+    if [[ -r $TOKEN_FILE ]]; then
         $PFCTL -X `$CAT "$TOKEN_FILE"`
     else
         $PFCTL -d
@@ -166,7 +166,7 @@ function loadCustomRules () {
     
     # Add each file in custom rule directory
     $ECHO ""
-    $ECHO "Loading rule files in /etc/pf.anchors/REVERSE_DOMAIN.pf.d/"
+    $ECHO "Loading rule files in ${CONF_DIR_CUSTOM}/"
     shopt -s nullglob
     DID_FIND_CUSTOMRULE_FILES=0
     CUSTOM_RULES=$CONF_DIR_CUSTOM/*
@@ -183,7 +183,7 @@ function loadCustomRules () {
     
     # Read all files that passed permissions check
     # and feed the results to pfctl
-    cat ${FILES_TO_LOAD[@]} | $PFCTL -a "REVERSE_DOMAIN.pf/custom" -f- > /dev/null 2>&1
+    $CAT ${FILES_TO_LOAD[@]} | $PFCTL -a "REVERSE_DOMAIN/custom" -f- > /dev/null 2>&1
 }
 
 # ========================================
