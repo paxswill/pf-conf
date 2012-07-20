@@ -27,11 +27,13 @@ DEFAULT_RULES_FILE="/etc/pf.anchors/REVERSE_DOMAIN.pf.rules"
 MACROS_FILE="/etc/pf.anchors/REVERSE_DOMAIN.pf.macros"
 CUSTOM_RULES_FILE="/etc/pf.anchors/REVERSE_DOMAIN.pf.custom"
 CONF_DIR_CUSTOM="/etc/pf.anchors/REVERSE_DOMAIN.pf.d"
+TOKEN_FILE="/var/run/REVERSE_DOMAIN.pf.token"
 PFCTL="/sbin/pfctl"
 ECHO="/bin/echo"
 STAT="/usr/bin/stat"
 PRINTF="/usr/bin/printf"
 SYSCTL="/usr/sbin/sysctl"
+CAT="/bin/cat"
 OP_MODE="restart"
 
 # ========================================
@@ -129,7 +131,9 @@ function enablePfctl () {
 # ========================================
     $ECHO ""
     $ECHO "Starting Packet Filter and reading default rules"
-    $PFCTL -E > /dev/null 2>&1
+    local $token=`$PFCTL -E 2>&1 > /dev/null | grep -o -e '[0-9]*$'`
+    $ECHO "Packet Filter Token: $token"
+    $ECHO "$token" > "$TOKEN_FILE"
     $PFCTL -f /etc/REVERSE_DOMAIN.pf.conf > /dev/null 2>&1
 }
 
@@ -138,7 +142,11 @@ function disablePfctl () {
 # ========================================
     $ECHO ""
     $ECHO "Disabling Packet Filter"
-    $PFCTL -d
+    if [[ -r /var/run/REVERSE_DOMAIN.pf.token ]]; then
+        $PFCTL -X `$CAT "$TOKEN_FILE"`
+    else
+        $PFCTL -d
+    fi
 }
 
 # ========================================
