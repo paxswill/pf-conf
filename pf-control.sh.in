@@ -150,6 +150,20 @@ function disablePfctl () {
 }
 
 # ========================================
+function loadDefaultRules () {
+# ========================================
+    $ECHO ""
+    $ECHO "Loading ${DEFAULT_RULES_FILE} under anchor REVERSE_DOMAIN"
+    if checkFilePerms "$DEFAULT_RULES_FILE"; then
+        $PFCTL -a REVERSE_DOMAIN -f "$DEFAULT_RULES_FILE"
+    else
+        $ECHO "${DEFAULT_RULES_FILE} has unsafe permissions."
+        disablePfctl
+        exit
+    fi
+}
+
+# ========================================
 function loadCustomRules () {
 # ========================================
     FILES_TO_LOAD=( "$MACROS_FILE" )
@@ -184,6 +198,26 @@ function loadCustomRules () {
     # Read all files that passed permissions check
     # and feed the results to pfctl
     $CAT ${FILES_TO_LOAD[@]} | $PFCTL -a "REVERSE_DOMAIN/custom" -f- > /dev/null 2>&1
+}
+
+# ========================================
+function unloadAnchor () {
+# ========================================
+    $ECHO ""
+    $ECHO "Unloading anchor $1"
+    $PFCTL -a $1 -Fa
+}
+
+# ========================================
+function unloadDefaultRules () {
+# ========================================
+    unloadAnchor "REVERSE_DOMAIN"
+}
+
+# ========================================
+function unloadCustomRules () {
+# ========================================
+    unloadAnchor "REVERSE_DOMAIN/custom"
 }
 
 # ========================================
@@ -238,16 +272,22 @@ else
     if [[ $OP_MODE == "start" ]]; then
         configureKernelParameters
         enablePfctl
+        loadDefaultRules
         loadCustomRules
         showCurrentRules
     
     elif [[ $OP_MODE == "stop" ]]; then
+        unloadCustomRules
+        unloadDefaultRules
         disablePfctl
     
     elif [[ $OP_MODE == "restart" ]]; then
         configureKernelParameters
+        unloadCustomRules
+        unloadDefaultRules
         disablePfctl
         enablePfctl
+        loadDefaultRules
         loadCustomRules
         showCurrentRules
     
