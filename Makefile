@@ -81,6 +81,8 @@ $(addprefix $(SCRIPTSDIR)/,$(scripts)): $(SCRIPTSDIR)/%: %
 	$(stage)
 	chmod +x $@
 
+destroot: $(STAGED)
+
 # Generate the component package
 intermediates += $(TITLE)-component.pkg
 $(TITLE)-component.pkg: $(STAGED)
@@ -109,7 +111,7 @@ clean:
 package: $(TITLE).pkg
 signed-package: $(TITLE)-signed.pkg
 
-.PHONY: clean package signed-package
+.PHONY: clean package signed-package destroot
 .DEFAULT_GOAL = package
 .INTERMEDIATE: $(intermediates)
 
