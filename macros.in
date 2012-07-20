@@ -16,3 +16,7 @@ admin_workstations  = "10.0.124.0/26"
 trusted_servers     = "{ 10.0.0.2, 10.0.0.3 }"
 
 table <lan_safe> { $lan_full, !10.0.15.0/21 }
+
+# RFC 1918 Private IP addresses
+table <rfc1918> const { 192.168.0.0/16, 172.16.0.0/12, 10.0.0.0/8 }
+private = "rfc1918"
