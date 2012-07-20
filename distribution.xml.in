@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<installer-gui-script minSpecVersion="1">
+	<title>TITLE</title>
+    <pkg-ref id="REVERSE_DOMAIN.TITLE"/>
+    <options customize="never"/>
+    <choices-outline>
+		<line choice="REVERSE_URL.TITLE"/>
+    </choices-outline>
+	<choice id="REVERSE_URL.TITLE" visible="true" starts_selected="true" enabled="false" title="PF Configuration" description="Install a baseline PF firewall configuration.">
+        <pkg-ref id="REVERSE_URL.TITLE"/>
+    </choice>
+    <pkg-ref id="REVERSE_URL.TITLE" version="1.0.0" onConclusion="none">TITLE-component.pkg</pkg-ref>
+</installer-gui-script>

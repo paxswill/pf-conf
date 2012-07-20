@@ -1,6 +1,5 @@
-m4_changequote(`', `')dnl
 # =====================================================
-#   @DOMAIN_PREFIX@.pf.conf
+#   REVERSE_DOMAIN.pf.conf
 #
 #   Packet Filter configuration file
 #
@@ -17,7 +16,7 @@ m4_changequote(`', `')dnl
 include "/etc/pf.conf"
 
 #
-# @DOMAIN_PREFIX@.pf anchor point
+# REVERSE_DOMAIN.pf anchor point
 #
-anchor "@DOMAIN_PREFIX@.pf"
-load anchor "@DOMAIN_PREFIX@.pf" from "/etc/pf.anchors/@DOMAIN_PREFIX@.pf.rules"
+anchor "REVERSE_DOMAIN.pf"
+load anchor "REVERSE_DOMAIN.pf" from "/etc/pf.anchors/REVERSE_DOMAIN.pf.rules"

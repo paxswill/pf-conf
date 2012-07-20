@@ -1,4 +1,3 @@
-m4_changequote(`', `')dnl
 #!/bin/bash
 
 # ==============================================================================
@@ -22,7 +21,7 @@ m4_changequote(`', `')dnl
 # ==============================================================================
 
 # Change to match the actual item (if needed):
-LAUNCHD_ITEM_NAME="@DOMAIN_PREFIX@.pf"
+LAUNCHD_ITEM_NAME="REVERSE_DOMAIN.pf"
 
 LAUNCHCTL="/bin/launchctl"
 PFCTL="/sbin/pfctl"

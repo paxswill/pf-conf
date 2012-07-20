@@ -1,4 +1,3 @@
-m4_changequote(`', `')dnl
 #!/bin/bash
 
 # ==============================================================================
@@ -20,7 +19,7 @@ m4_changequote(`', `')dnl
 #   limitations under the License.
 # ==============================================================================
 
-ITEM_NAME="@DOMAIN_PREFIX@.pf"
+ITEM_NAME="REVERSE_DOMAIN.pf"
 NOW=$(date +"%Y-%m-%d-%H%M%S")
 LAUNCHCTL="/bin/launchctl"
 PF_LAUNCH_DAEMON="$3/Library/LaunchDaemons/$ITEM_NAME.plist"
@@ -31,15 +30,15 @@ mkdir $BACKUP_DIR
 # Define the items to backup
 # =================================================
 FILES_TO_BACKUP=(
-"$3/etc/@DOMAIN_PREFIX@.pf.conf"
-"$3/etc/pf.anchors/@DOMAIN_PREFIX@.pf.rules"
-"$3/etc/pf.anchors/@DOMAIN_PREFIX@.pf.macros"
-"$3/etc/pf.anchors/@DOMAIN_PREFIX@.pf.custom"
+"$3/etc/REVERSE_DOMAIN.pf.conf"
+"$3/etc/pf.anchors/REVERSE_DOMAIN.pf.rules"
+"$3/etc/pf.anchors/REVERSE_DOMAIN.pf.macros"
+"$3/etc/pf.anchors/REVERSE_DOMAIN.pf.custom"
 "$3/etc/pf.conf"
 PF_LAUNCH_DAEMON
 )
 DIRECTORIES_TO_BACKUP=(
-"$3/etc/pf.anchors/@DOMAIN_PREFIX@.pf.d"
+"$3/etc/pf.anchors/REVERSE_DOMAIN.pf.d"
 )
 
 # =================================================

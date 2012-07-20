@@ -1,6 +1,5 @@
-m4_changequote(`', `')dnl
 # =====================================================
-#   @DOMAIN_PREFIX@.pf.rules
+#   REVERSE_DOMAIN.pf.rules
 #
 #   Packet Filter defaults
 #
@@ -11,7 +10,7 @@ m4_changequote(`', `')dnl
 # =====================================================
 #   Macros
 # =====================================================
-include "/etc/pf.anchors/@DOMAIN_PREFIX@.pf.macros"
+include "/etc/pf.anchors/REVERSE_DOMAIN.pf.macros"
 
 # =====================================================
 #   Filter rules
