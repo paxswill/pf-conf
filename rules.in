@@ -33,8 +33,8 @@ scrub all reassemble tcp
 block in all
 
 # Allow DHCP client operation
-pass in inet proto udp from any port bootps to (any):broadcast port bootpc
-pass out inet proto udp from 0.0.0.0 port bootpc to (any):broadcast port bootps
+pass in inet proto udp from any port bootps to (any:broadcast) port bootpc
+pass out inet proto udp from 0.0.0.0 port bootpc to (any:broadcast) port bootps
 
 # Allow DHCPv6 and the related IPv6 address resolution protocols
 pass in inet6 proto udp from any port dhcpv6-server to any port dhcpv6-client
