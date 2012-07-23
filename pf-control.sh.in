@@ -23,10 +23,9 @@
 # ========================================
 # Declare variables
 # ========================================
-DEFAULT_RULES_FILE="/etc/pf.anchors/REVERSE_DOMAIN.rules"
+DEFAULT_RULES_FILE="/etc/pf.anchors/REVERSE_DOMAIN"
 MACROS_FILE="/etc/pf.anchors/REVERSE_DOMAIN.macros"
-CUSTOM_RULES_FILE="/etc/pf.anchors/REVERSE_DOMAIN.custom"
-CONF_DIR_CUSTOM="/etc/pf.anchors/REVERSE_DOMAIN.d"
+CUSTOM_RULES_D="/etc/pf.anchors/REVERSE_DOMAIN.d"
 TOKEN_FILE="/var/run/REVERSE_DOMAIN.pf.token"
 PFCTL="/sbin/pfctl"
 ECHO="/bin/echo"
@@ -35,6 +34,7 @@ PRINTF="/usr/bin/printf"
 SYSCTL="/usr/sbin/sysctl"
 CAT="/bin/cat"
 RM="/bin/rm"
+BASENAME="/usr/bin/basename"
 OP_MODE="restart"
 
 # ========================================
@@ -86,9 +86,9 @@ function verifyFiles () {
     OBJECT=""
     RESULT=""
     
-    OBJECT=$CONF_DIR_CUSTOM
-    if [[ -d "$CONF_DIR_CUSTOM" ]]; then
-    if checkDirectoryPerms "$CONF_DIR_CUSTOM"; then
+    OBJECT=$CUSTOM_RULES_D
+    if [[ -d "$CUSTOM_RULES_D" ]]; then
+    if checkDirectoryPerms "$CUSTOM_RULES_D"; then
         RESULT=$VERIFIED
     fi
     else
@@ -96,22 +96,13 @@ function verifyFiles () {
     fi
     $PRINTF "$FORMAT" "$OBJECT" "$RESULT"
 
-    OBJECT=$CUSTOM_RULES_FILE
-    if [[ -f "$CUSTOM_RULES_FILE" ]]; then
-    if checkFilePerms "$CUSTOM_RULES_FILE"; then
-        RESULT=$VERIFIED
-    else
-        RESULT=$INSECURE
-    fi
-    else
-    RESULT=$NOT_FOUND
     fi
     $PRINTF "$FORMAT" "$OBJECT" "$RESULT"
     
-    if [[ -d $CONF_DIR_CUSTOM ]]; then
+    if [[ -d $CUSTOM_RULES_D ]]; then
     shopt -s nullglob
     DID_FIND_CUSTOMRULE_FILES=0
-    CUSTOM_RULES="${CONF_DIR_CUSTOM}/*"
+    CUSTOM_RULES="${CUSTOM_RULES_D}/*"
     for f in $CUSTOM_RULES
     do
         OBJECT=$f
@@ -135,7 +126,6 @@ function enablePfctl () {
     local $token=`$PFCTL -E 2>&1 > /dev/null | grep -o -e '[0-9]*$'`
     $ECHO "Packet Filter Token: $token"
     $ECHO "$token" > "$TOKEN_FILE"
-    $PFCTL -f /etc/REVERSE_DOMAIN.pf.conf > /dev/null 2>&1
 }
 
 # ========================================
@@ -159,7 +149,7 @@ function loadDefaultRules () {
     if checkFilePerms "$DEFAULT_RULES_FILE"; then
         $PFCTL -a REVERSE_DOMAIN -f "$DEFAULT_RULES_FILE"
     else
-        $ECHO "${DEFAULT_RULES_FILE} has unsafe permissions."
+        $ECHO "${DEFAULT_RULES_FILE} is not loaded (Unsafe permissions)."
         disablePfctl
         exit
     fi
@@ -168,38 +158,15 @@ function loadDefaultRules () {
 # ========================================
 function loadCustomRules () {
 # ========================================
-    FILES_TO_LOAD=( "$MACROS_FILE" )
-    
-    # Add custom rule file
-    if [[ -f "$CUSTOM_RULES_FILE" ]]; then
-    $ECHO ""
-    $ECHO "Loading $CUSTOM_RULES_FILE:"
-    if checkFilePerms "$CUSTOM_RULES_FILE"; then
-        $ECHO "---> $CUSTOM_RULES_FILE"
-        FILES_TO_LOAD=( "${FILES_TO_LOAD[@]}" "$CUSTOM_RULES_FILE" )
-    fi
-    fi
-    
-    # Add each file in custom rule directory
-    $ECHO ""
-    $ECHO "Loading rule files in ${CONF_DIR_CUSTOM}/"
-    shopt -s nullglob
-    DID_FIND_CUSTOMRULE_FILES=0
-    CUSTOM_RULES=$CONF_DIR_CUSTOM/*
-    for f in $CUSTOM_RULES
-    do
-    if checkFilePerms "$f"; then
-        $ECHO "---> $f"
-        FILES_TO_LOAD=( "${FILES_TO_LOAD[@]}" "$f" )
-        DID_FIND_CUSTOMRULE_FILES=1
-    fi
-    done
-    shopt -u nullglob
-    [ $DID_FIND_CUSTOMRULE_FILES -eq 0 ] && $ECHO "---> Directory is empty"
-    
-    # Read all files that passed permissions check
-    # and feed the results to pfctl
-    $CAT ${FILES_TO_LOAD[@]} | $PFCTL -a "REVERSE_DOMAIN/custom" -f- > /dev/null 2>&1
+	for rule in "$CUSTOM_RULES_D/*"; do
+		local anchor_name=$($BASENAME -s .pf $($BASENAME -s .conf "$rule"))
+		$ECHO "Loading $rule under anchor REVERSE_DOMAIN/$anchor_name"
+		if checkFilePerms "$rule"; then
+			$PFCTL -a "REVERSE_DOMAIN/${anchor_name}" -f "$rule"
+		else
+			$ECHO "${rule} is not loaded (Unsafe permissions)."
+		fi
+	done
 }
 
 # ========================================
@@ -219,7 +186,7 @@ function unloadDefaultRules () {
 # ========================================
 function unloadCustomRules () {
 # ========================================
-    unloadAnchor "REVERSE_DOMAIN/custom"
+    unloadAnchor "REVERSE_DOMAIN/*"
 }
 
 # ========================================

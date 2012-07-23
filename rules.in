@@ -57,7 +57,3 @@ pass out inet proto icmp all icmp-type 0
 pass in inet6 proto icmp6 all icmp-type 128
 pass out inet6 proto icmp6 all icmp-type 129
 
-#
-# Custom rules anchor
-#
-anchor "custom"

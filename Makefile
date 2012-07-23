@@ -47,14 +47,16 @@ DESTROOT := destroot
 $(DESTROOT)/Library/LaunchDaemons/$(REVERSE_DOMAIN).pf.plist: pf.plist
 	$(stage)
 
-# Stage the anchors
-anchors := $(DESTROOT)/etc/pf.anchors/$(REVERSE_DOMAIN)
-staged_anchors := $(addprefix $(anchors).,macros rules)
-STAGED += $(staged_anchors)
-$(staged_anchors): $(anchors).%: %
+# Stage the rules
+rule := $(DESTROOT)/etc/pf.anchors/$(REVERSE_DOMAIN)
+STAGED += $(rule)
+$(rule): rules.in
 	$(stage)
-STAGED += $(anchors).d
-$(anchors).d:
+STAGED += $(rule).macros
+$(rule).macros: macros.in
+	$(stage)
+STAGED += $(rule).d
+$(rule).d:
 	mkdir -p $@
 
 # Stage the admin commands
@@ -67,11 +69,6 @@ STAGED += $(staged_libexec)
 $(staged_libexec): $(libexec)/%: %
 	$(stage)
 	chmod +x $@
-
-# Stage the main pf.conf file
-STAGED += $(DESTROOT)/etc/$(REVERSE_DOMAIN).pf.conf
-$(DESTROOT)/etc/$(REVERSE_DOMAIN).pf.conf: pf.conf
-	$(stage)
 
 # Stage the installer scripts
 SCRIPTSDIR := scripts
