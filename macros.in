@@ -10,13 +10,15 @@
 #   2012-05-28 Hannes Juutilainen: Initial Version
 # =====================================================
 
-lan_full            = "10.0.0.0/16"
-admin_vpns          = "10.0.123.0/26"
-admin_workstations  = "10.0.124.0/26"
-trusted_servers     = "{ 10.0.0.2, 10.0.0.3 }"
+# These are just more descriptive names for common interfaces.
+# NOTE: They may not match up correctly for your hardware configuration,
+# ex: a Mac Pro has two Ethernet interfaces so wifi would actually be en2.
+loopback = "lo0"
+wired = "en0"
+wifi = "en1"
+firewire = "fw0"
+tunnels = "{ gif0 stf0 }"
+bluetooth = "p2p0"
 
-table <lan_safe> { $lan_full, !10.0.15.0/21 }
-
-# RFC 1918 Private IP addresses
+# RFC 1918 Private IP addresses.
 table <rfc1918> const { 192.168.0.0/16, 172.16.0.0/12, 10.0.0.0/8 }
-private = "rfc1918"
