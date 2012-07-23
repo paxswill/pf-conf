@@ -21,7 +21,7 @@
 # ==============================================================================
 
 # Change to match the actual item (if needed):
-LAUNCHD_ITEM_NAME="REVERSE_DOMAIN.pf"
+LAUNCHD_ITEM_NAME="DOMAIN_TOKEN.pf"
 
 LAUNCHCTL="/bin/launchctl"
 PFCTL="/sbin/pfctl"

@@ -3,7 +3,7 @@
 <plist version="1.0">
 	<dict>
 		<key>Label</key>
-		<string>REVERSE_DOMAIN.pf</string>
+		<string>DOMAIN_TOKEN.pf</string>
 		<key>ProgramArguments</key>
 		<array>
 			<string>/usr/local/libexec/pf-control.sh</string>

@@ -30,7 +30,7 @@ PRODUCTSIGN ?= $(shell xcrun -find productsign)
 SIGNER := $(shell security find-identity -p codesigning -v | grep -o -e '".*"$$')
 
 # M4 input files
-M4PREP = "m4_define(\`TITLE',\`$(TITLE)')m4_define(\`REVERSE_DOMAIN',\`$(REVERSE_DOMAIN)')m4_changequote(\`',\`')m4_dnl"
+M4PREP = "m4_define(\`TITLE',\`$(TITLE)')m4_define(\`DOMAIN_TOKEN',\`$(REVERSE_DOMAIN)')m4_changequote(\`',\`')m4_dnl"
 M4FILES := $(subst .in,,$(wildcard *.in))
 $(info M4Files: $(M4FILES))
 intermediates := $(M4FILES)
@@ -50,10 +50,10 @@ $(DESTROOT)/Library/LaunchDaemons/$(REVERSE_DOMAIN).pf.plist: pf.plist
 # Stage the rules
 rule := $(DESTROOT)/etc/pf.anchors/$(REVERSE_DOMAIN)
 STAGED += $(rule)
-$(rule): rules.in
+$(rule): rules
 	$(stage)
 STAGED += $(rule).macros
-$(rule).macros: macros.in
+$(rule).macros: macros
 	$(stage)
 STAGED += $(rule).d
 $(rule).d:
@@ -103,7 +103,7 @@ $(TITLE).pkg: $(TITLE)-component.pkg distribution.xml
 	$(PRODUCTSIGN) --sign $(SIGNER) $< $@
 
 clean:
-	rm -rf $(DESTROOT) $(SCRIPTSDIR) *.pkg
+	rm -rf $(DESTROOT) $(STAGED) $(M4FILES) $(SCRIPTSDIR) *.pkg
 
 package: $(TITLE).pkg
 signed-package: $(TITLE)-signed.pkg
