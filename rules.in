@@ -22,18 +22,19 @@ set skip on lo0
 # Scrub incoming packets
 scrub in all no-df
 
-# Antispoof
-antispoof quick for en0
-antispoof quick	for (en1)
-
 # Block by default
-block in
+block in all
 
 # Allow outgoing
 pass out quick
 
 # Allow DHCP
 pass in quick inet proto udp from any port 67 to any port 68
+
+# Antispoof
+antispoof for (wired)
+antispoof for (wifi)
+antispoof for (firewire)
 
 # Allow icmp from LAN
 pass in log proto icmp from <lan_safe>
