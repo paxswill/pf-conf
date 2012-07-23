@@ -34,6 +34,7 @@ STAT="/usr/bin/stat"
 PRINTF="/usr/bin/printf"
 SYSCTL="/usr/sbin/sysctl"
 CAT="/bin/cat"
+RM="/bin/rm"
 OP_MODE="restart"
 
 # ========================================
@@ -144,6 +145,7 @@ function disablePfctl () {
     $ECHO "Disabling Packet Filter"
     if [[ -r $TOKEN_FILE ]]; then
         $PFCTL -X `$CAT "$TOKEN_FILE"`
+		$RM "$TOKEN_FILE"
     else
         $PFCTL -d
     fi
