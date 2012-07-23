@@ -100,7 +100,7 @@ $(TITLE).pkg: $(TITLE)-component.pkg distribution.xml
 
 # Generate a signed package
 %-signed.pkg: %.pkg
-	$(PRODUCTSIGN) --sign "$(SIGNER)" $< $@
+	$(PRODUCTSIGN) --sign $(SIGNER) $< $@
 
 clean:
 	rm -rf $(DESTROOT) $(SCRIPTSDIR) *.pkg
