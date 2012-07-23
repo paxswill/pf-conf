@@ -32,9 +32,6 @@ scrub all reassemble tcp
 # Block by default
 block in all
 
-# Allow outgoing
-pass out quick
-
 # Allow DHCP
 pass in quick inet proto udp from any port 67 to any port 68
 
