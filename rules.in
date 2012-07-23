@@ -40,7 +40,7 @@ pass out inet proto udp from 0.0.0.0 port bootpc to (any:broadcast) port bootps
 pass in inet6 proto udp from any port dhcpv6-server to any port dhcpv6-client
 pass out inet6 proto udp from any port dhcpv6-client to any port dhcpv6-server
 # Neighbor Discovery Protocol (NDP)
-pass in inet6 proto icmp6 from { ff02::1, fe80::/64 } to \
+pass in inet6 proto ipv6-icmp from { ff02::1, fe80::/64 } to \
 	{ ff02::1, fe80::/24 }  icmp6-type {133, 134, 135, 136, 137}
 
 # Allow mDNS (Bonjour)
@@ -49,8 +49,8 @@ pass proto udp from any to { 224.0.0.251 ff02::fb ff05::fb } port mdns
 # Allow ICMP Echo Requests (ping)
 pass in inet proto icmp all icmp-type 8
 pass out inet proto icmp all icmp-type 0
-pass in inet6 proto icmp6 all icmp-type 128
-pass out inet6 proto icmp6 all icmp-type 129
+pass in inet6 proto ipv6-icmp all icmp6-type 128
+pass out inet6 proto ipv6-icmp all icmp6-type 129
 
 # Antispoof
 antispoof for (wired)
