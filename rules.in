@@ -32,11 +32,6 @@ scrub all reassemble tcp
 # Block by default
 block in all
 
-# Antispoof
-antispoof for (wired)
-antispoof for (wifi)
-antispoof for (firewire)
-
 # Allow DHCP client operation
 pass in inet proto udp from any port bootps to (any):broadcast port bootpc
 pass out inet proto udp from 0.0.0.0 port bootpc to (any):broadcast port bootps
@@ -57,3 +52,7 @@ pass out inet proto icmp all icmp-type 0
 pass in inet6 proto icmp6 all icmp-type 128
 pass out inet6 proto icmp6 all icmp-type 129
 
+# Antispoof
+antispoof for (wired)
+antispoof for (wifi)
+antispoof for (firewire)
