@@ -26,8 +26,6 @@ set skip on loopback
 scrub in all no-df random-id
 # Reassemble incoming fragments, primarily for NAT support.
 scrub in all fragment reassemble
-# Enable additional normalizations for TCP connections.
-scrub all reassemble tcp
 
 # Block by default
 block in all
