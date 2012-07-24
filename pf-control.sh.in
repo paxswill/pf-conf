@@ -36,6 +36,7 @@ SYSCTL="/usr/sbin/sysctl"
 CAT="/bin/cat"
 RM="/bin/rm"
 BASENAME="/usr/bin/basename"
+DIRNAME="/usr/bin/dirname"
 GREP="/usr/bin/grep"
 TR="/usr/bin/tr"
 OP_MODE="restart"
@@ -142,29 +143,41 @@ function disablePfctl () {
 }
 
 # ========================================
-function appendAnchor () {
+function loadAnchor () {
+# Usage: loadAnchor AnchorPath AnchorRules
 # ========================================
-    local normalization=$($PFCTL -sr | $GREP scrub)
-    local translation=$($PFCTL -sn)
-    local filtering=$($PFCTL -sr | $GREP -v scrub)
-    normalization=$($PRINTF '%s\nscrub-anchor "%s"\nscrub-anchor "%s/*"\n' "$normalization" "$1" "$1")
-    translation=$($PRINTF '%s\nnat-anchor "%s"\nrdr-anchor "%s"\n' "$translation" "$1" "$1")
-    translation=$($PRINTF '%s\nnat-anchor "%s/*"\nrdr-anchor "%s/*"\n' "$translation" "$1" "$1")
-    filtering=$($PRINTF '%s\nanchor "%s"\nanchor "%s/*"\n' "$filtering" "$1" "$1")
-    local new_rules=$($PRINTF '%s\n%s\n%s\n' "$normalization" "$translation" "$filtering")
-    $ECHO ""
-    $ECHO "Setting new rules to:"
-    $ECHO "$new_rules"
-    $ECHO "$new_rules"| $PFCTL -f -
+    parent_anchor="$($DIRNAME "$1")"
+    if [ "$parent_anchor" = "." ]; then
+        parent_anchor=""
+        base_anchor="$1"
+    else
+        parent_anchor="-a $parent_anchor"
+        base_anchor="$($BASENAME $1)"
+    fi
+    normalization="$($PFCTL -sr $parent_anchor 2>/dev/null | $GREP scrub)"
+    translation="$($PFCTL -sn $parent_anchor 2>/dev/null)"
+    filtering="$($PFCTL -sr $parent_anchor 2>/dev/null | $GREP -v scrub)"
+    normalization="$($PRINTF '%s\nscrub-anchor "%s"\n' "$normalization" "$base_anchor")"
+    translation="$($PRINTF '%s\nnat-anchor "%s"\nrdr-anchor "%s"\n' "$translation" "$base_anchor" "$base_anchor")"
+    filtering="$($PRINTF '%s\nanchor "%s"\n' "$filtering" "$base_anchor")"
+    parent_rules="$($PRINTF '%s\n%s\n%s\n' "$normalization" "$translation" \
+        "$filtering")"
+    $ECHO "$parent_rules"| $PFCTL -f - $parent_anchor
+    $ECHO "$2" | $PFCTL -f - -a "$1"
+    unset parent_anchor
+    unset base_anchor
+    unset normalization
+    unset translation
+    unset filtering
+    unset parent_rules
 }
 
 # ========================================
 function unloadAnchor () {
 # ========================================
     $ECHO ""
-    $ECHO "Unloading anchor $1"
+    $ECHO "Removing anchor $1"
     $PFCTL -a $1 -Fa
-    $ECHO "Removing anchor $1 from the rules"
     local normalization=$($PFCTL -sr | $GREP scrub)
     local translation=$($PFCTL -sn)
     local filtering=$($PFCTL -sr | $GREP -v scrub)
@@ -172,9 +185,6 @@ function unloadAnchor () {
     translation="$($ECHO "$translation" | $GREP -v "$REVERSE_DOMAIN")"
     filtering="$($ECHO "$filtering" | $GREP -v "$REVERSE_DOMAIN")"
     local new_rules=$($PRINTF '%s\n%s\n%s\n' "$normalization" "$translation" "$filtering")
-    $ECHO ""
-    $ECHO "Setting new rules to:"
-    $ECHO "$new_rules"
     $ECHO "$new_rules"| $PFCTL -f -
 }
 
@@ -184,8 +194,7 @@ function loadDefaultRules () {
     $ECHO ""
     $ECHO "Loading ${DEFAULT_RULES_FILE} under anchor ${REVERSE_DOMAIN}"
     if checkFilePerms "$DEFAULT_RULES_FILE"; then
-        $PFCTL -a ${REVERSE_DOMAIN} -f "$DEFAULT_RULES_FILE"
-        appendAnchor ${REVERSE_DOMAIN}
+        loadAnchor "$REVERSE_DOMAIN" "$($CAT "$DEFAULT_RULES_FILE")"
     else
         $ECHO "${DEFAULT_RULES_FILE} is not loaded (Unsafe permissions)."
         disablePfctl
@@ -200,14 +209,12 @@ function loadCustomRules () {
         local anchor_name=$($BASENAME -s .pf $($BASENAME -s .conf "$rule"))
         $ECHO "Loading $rule under anchor ${REVERSE_DOMAIN}/$anchor_name"
         if checkFilePerms "$rule"; then
-            $PFCTL -a "${REVERSE_DOMAIN}/${anchor_name}" -f "$rule"
+            loadAnchor "${REVERSE_DOMAIN}/${anchor_name}" "$($CAT "$rule")"
         else
             $ECHO "${rule} is not loaded (Unsafe permissions)."
         fi
     done
 }
-
-
 
 # ========================================
 function unloadDefaultRules () {
