@@ -39,6 +39,7 @@ BASENAME="/usr/bin/basename"
 DIRNAME="/usr/bin/dirname"
 GREP="/usr/bin/grep"
 TR="/usr/bin/tr"
+IFCONFIG="/sbin/ifconfig"
 OP_MODE="restart"
 
 # ========================================
@@ -238,7 +239,7 @@ function showCurrentRules () {
 }
 
 # ========================================
-function configureKernelParameters () {
+function configureSystem () {
 # ========================================
     $SYSCTL -w net.inet.ip.fw.enable=1 > /dev/null 2>&1
     $SYSCTL -w net.inet.ip.fw.verbose=2 > /dev/null 2>&1
@@ -246,6 +247,7 @@ function configureKernelParameters () {
     $SYSCTL -w net.inet.ip.fw.verbose_limit=0 > /dev/null 2>&1
     $SYSCTL -w net.inet.ip.forwarding=1 > /dev/null 2>&1
     $SYSCTL -w net.inet6.ip6.forwarding=1 > /dev/null 2>&1
+    $IFCONFIG pflog0 create
 }
 
 
@@ -280,7 +282,7 @@ else
     verifyFiles
     
     if [[ $OP_MODE == "start" ]]; then
-        configureKernelParameters
+        configureSystem
         enablePfctl
         loadDefaultRules
         loadCustomRules
@@ -292,7 +294,7 @@ else
         disablePfctl
     
     elif [[ $OP_MODE == "restart" ]]; then
-        configureKernelParameters
+        configureSystem
         unloadCustomRules
         unloadDefaultRules
         disablePfctl
