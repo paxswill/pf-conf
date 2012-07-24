@@ -44,6 +44,7 @@ stage = mkdir -p $(dir $@) && cp $< $@
 DESTROOT := destroot
 
 # Stage the launchd property list
+STAGED += $(DESTROOT)/Library/LaunchDaemons/$(REVERSE_DOMAIN).pf.plist
 $(DESTROOT)/Library/LaunchDaemons/$(REVERSE_DOMAIN).pf.plist: pf.plist
 	$(stage)
 
