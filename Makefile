@@ -55,9 +55,6 @@ $(rule): rules
 STAGED += $(rule).macros
 $(rule).macros: macros
 	$(stage)
-STAGED += $(rule).d
-$(rule).d:
-	mkdir -p $@
 
 # Stage the admin commands
 # Cancel conflicting builtin rules

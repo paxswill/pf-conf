@@ -30,11 +30,8 @@ mkdir $BACKUP_DIR
 # Define the items to backup
 # =================================================
 FILES_TO_BACKUP=(
-"$3/etc/DOMAIN_TOKEN.pf.conf"
-"$3/etc/pf.anchors/DOMAIN_TOKEN.rules"
+"$3/etc/pf.anchors/DOMAIN_TOKEN"
 "$3/etc/pf.anchors/DOMAIN_TOKEN.macros"
-"$3/etc/pf.anchors/DOMAIN_TOKEN.custom"
-"$3/etc/pf.conf"
 PF_LAUNCH_DAEMON
 )
 DIRECTORIES_TO_BACKUP=(

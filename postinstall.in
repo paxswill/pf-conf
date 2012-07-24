@@ -21,22 +21,6 @@
 
 echo $SCRIPT_NAME: Starting
 
-# ===========================================
-# Create a rule template if it doesn't exist
-# ===========================================
-CUSTOM_RULE_FILE="$3/etc/pf.anchors/DOMAIN_TOKEN.custom"
-if [[ ! -f $CUSTOM_RULE_FILE ]]; then
-    echo $SCRIPT_NAME: Creating example custom rules file $CUSTOM_RULE_FILE
-    echo "# =====================================" >> $CUSTOM_RULE_FILE
-    echo "# Custom rules for pf firewall" >> $CUSTOM_RULE_FILE
-    echo "# Macros: /etc/pf.anchors/DOMAIN_TOKEN.macros" >> $CUSTOM_RULE_FILE
-    echo "# =====================================" >> $CUSTOM_RULE_FILE
-    echo "" >> $CUSTOM_RULE_FILE
-    echo "# Example rule" >> $CUSTOM_RULE_FILE
-    echo "# pass in proto tcp from <lan_safe> to port 22" >> $CUSTOM_RULE_FILE
-    echo "" >> $CUSTOM_RULE_FILE
-fi
-
 # ============================================
 # Create a directory for other custom files
 # ============================================
@@ -53,8 +37,8 @@ fi
 if [[ "$3" == "/" ]]; then
     echo $SCRIPT_NAME: Installed on startup volume
     echo $SCRIPT_NAME: Starting firewall
-    if [[ -f "/usr/local/bin/pf-restart.sh" ]]; then
-		/usr/local/bin/pf-restart.sh
+    if [[ -f "/usr/local/libexec/pf-restart.sh" ]]; then
+		/usr/local/libexec/pf-restart.sh
     fi
 else
     echo $SCRIPT_NAME: Installed on non-startup volume
