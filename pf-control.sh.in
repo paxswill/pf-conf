@@ -36,6 +36,8 @@ SYSCTL="/usr/sbin/sysctl"
 CAT="/bin/cat"
 RM="/bin/rm"
 BASENAME="/usr/bin/basename"
+GREP="/usr/bin/grep"
+TR="/usr/bin/tr"
 OP_MODE="restart"
 
 # ========================================
@@ -121,7 +123,7 @@ function enablePfctl () {
 # ========================================
     $ECHO ""
     $ECHO "Starting Packet Filter and reading default rules"
-    local token="`$PFCTL -E 2>&1 > /dev/null | grep -o -e '[0-9]*$' | tr -d [:blank:]`"
+    local token="`$PFCTL -E 2>&1 > /dev/null | $GREP -o -e '[0-9]*$' | $TR -d [:blank:]`"
     $ECHO "Packet Filter Token: $token"
     $ECHO "$token" > "$TOKEN_FILE"
 }
@@ -140,12 +142,38 @@ function disablePfctl () {
 }
 
 # ========================================
+function appendAnchor () {
+# ========================================
+	local normalization=$($PFCTL -sr | $GREP scrub)
+	local translation=$($PFCTL -sn)
+	local filtering=$($PFCTL -sr | $GREP -v scrub)
+	normalization=$($PRINTF '%s\nscrub-anchor "%s"\nscrub-anchor "%s/*"\n' "$normalization" "$1" "$1")
+	translation=$($PRINTF '%s\nnat-anchor "%s"\nrdr-anchor "%s"\n' "$translation" "$1" "$1")
+	translation=$($PRINTF '%s\nnat-anchor "%s/*"\nrdr-anchor "%s/*"\n' "$translation" "$1" "$1")
+	filtering=$($PRINTF '%s\nanchor "%s"\nanchor "%s/*"\n' "$filtering" "$1" "$1")
+	local new_rules=$($PRINTF '%s\n%s\n%s\n' "$normalization" "$translation" "$filtering")
+	$ECHO ""
+	$ECHO "Setting new rules to:"
+	$ECHO "$new_rules"
+	$ECHO "$new_rules"| $PFCTL -f -
+}
+
+# ========================================
+function unloadAnchor () {
+# ========================================
+    $ECHO ""
+    $ECHO "Unloading anchor $1"
+    $PFCTL -a $1 -Fa
+}
+
+# ========================================
 function loadDefaultRules () {
 # ========================================
     $ECHO ""
     $ECHO "Loading ${DEFAULT_RULES_FILE} under anchor ${REVERSE_DOMAIN}"
     if checkFilePerms "$DEFAULT_RULES_FILE"; then
         $PFCTL -a ${REVERSE_DOMAIN} -f "$DEFAULT_RULES_FILE"
+		appendAnchor ${REVERSE_DOMAIN}
     else
         $ECHO "${DEFAULT_RULES_FILE} is not loaded (Unsafe permissions)."
         disablePfctl
@@ -167,13 +195,7 @@ function loadCustomRules () {
 	done
 }
 
-# ========================================
-function unloadAnchor () {
-# ========================================
-    $ECHO ""
-    $ECHO "Unloading anchor $1"
-    $PFCTL -a $1 -Fa
-}
+
 
 # ========================================
 function unloadDefaultRules () {
