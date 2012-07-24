@@ -23,15 +23,23 @@
 # ========================================
 # Declare variables
 # ========================================
-DEFAULT_RULES_FILE="/etc/pf.anchors/REVERSE_DOMAIN.pf.rules"
-MACROS_FILE="/etc/pf.anchors/REVERSE_DOMAIN.pf.macros"
-CUSTOM_RULES_FILE="/etc/pf.anchors/REVERSE_DOMAIN.pf.custom"
-CONF_DIR_CUSTOM="/etc/pf.anchors/REVERSE_DOMAIN.pf.d"
+REVERSE_DOMAIN="DOMAIN_TOKEN"
+DEFAULT_RULES_FILE="/etc/pf.anchors/${REVERSE_DOMAIN}"
+MACROS_FILE="/etc/pf.anchors/${REVERSE_DOMAIN}.macros"
+CUSTOM_RULES_D="/etc/pf.anchors/${REVERSE_DOMAIN}.d"
+TOKEN_FILE="/var/run/${REVERSE_DOMAIN}.pf.token"
 PFCTL="/sbin/pfctl"
 ECHO="/bin/echo"
 STAT="/usr/bin/stat"
 PRINTF="/usr/bin/printf"
 SYSCTL="/usr/sbin/sysctl"
+CAT="/bin/cat"
+RM="/bin/rm"
+BASENAME="/usr/bin/basename"
+DIRNAME="/usr/bin/dirname"
+GREP="/usr/bin/grep"
+TR="/usr/bin/tr"
+IFCONFIG="/sbin/ifconfig"
 OP_MODE="restart"
 
 # ========================================
@@ -83,9 +91,9 @@ function verifyFiles () {
     OBJECT=""
     RESULT=""
     
-    OBJECT=$CONF_DIR_CUSTOM
-    if [[ -d "$CONF_DIR_CUSTOM" ]]; then
-    if checkDirectoryPerms "$CONF_DIR_CUSTOM"; then
+    OBJECT=$CUSTOM_RULES_D
+    if [[ -d "$CUSTOM_RULES_D" ]]; then
+    if checkDirectoryPerms "$CUSTOM_RULES_D"; then
         RESULT=$VERIFIED
     fi
     else
@@ -93,22 +101,10 @@ function verifyFiles () {
     fi
     $PRINTF "$FORMAT" "$OBJECT" "$RESULT"
 
-    OBJECT=$CUSTOM_RULES_FILE
-    if [[ -f "$CUSTOM_RULES_FILE" ]]; then
-    if checkFilePerms "$CUSTOM_RULES_FILE"; then
-        RESULT=$VERIFIED
-    else
-        RESULT=$INSECURE
-    fi
-    else
-    RESULT=$NOT_FOUND
-    fi
-    $PRINTF "$FORMAT" "$OBJECT" "$RESULT"
-    
-    if [[ -d $CONF_DIR_CUSTOM ]]; then
+    if [[ -d $CUSTOM_RULES_D ]]; then
     shopt -s nullglob
     DID_FIND_CUSTOMRULE_FILES=0
-    CUSTOM_RULES=/etc/pf.anchors/REVERSE_DOMAIN.custom.d/*
+    CUSTOM_RULES="${CUSTOM_RULES_D}/*"
     for f in $CUSTOM_RULES
     do
         OBJECT=$f
@@ -129,8 +125,10 @@ function enablePfctl () {
 # ========================================
     $ECHO ""
     $ECHO "Starting Packet Filter and reading default rules"
-    $PFCTL -E > /dev/null 2>&1
-    $PFCTL -f /etc/REVERSE_DOMAIN.pf.conf > /dev/null 2>&1
+    # The line below is not a typo; the token is output on stderr, not stdout
+    local token="$($PFCTL -E 2>&1 >/dev/null | $GREP -o -e '[0-9]*$' | $TR -d '\n')"
+    $ECHO "Packet Filter Token: $token"
+    $ECHO "$token" > "$TOKEN_FILE"
 }
 
 # ========================================
@@ -138,44 +136,98 @@ function disablePfctl () {
 # ========================================
     $ECHO ""
     $ECHO "Disabling Packet Filter"
-    $PFCTL -d
+    if [[ -r $TOKEN_FILE ]]; then
+        $PFCTL -X `$CAT "$TOKEN_FILE"` >/dev/null 2>&1
+        $RM "$TOKEN_FILE"
+    else
+        $PFCTL -d >/dev/null 2>&1
+    fi
+}
+
+# ========================================
+function loadAnchor () {
+# Usage: loadAnchor AnchorPath AnchorRules
+# ========================================
+    parent_anchor="$($DIRNAME "$1")"
+    if [ "$parent_anchor" = "." ]; then
+        parent_anchor=""
+        base_anchor="$1"
+    else
+        parent_anchor="-a $parent_anchor"
+        base_anchor="$($BASENAME $1)"
+    fi
+    normalization="$($PFCTL -sr $parent_anchor 2>/dev/null | $GREP scrub)"
+    translation="$($PFCTL -sn $parent_anchor 2>/dev/null)"
+    filtering="$($PFCTL -sr $parent_anchor 2>/dev/null | $GREP -v scrub)"
+    normalization="$($PRINTF '%s\nscrub-anchor "%s"\n' "$normalization" "$base_anchor")"
+    translation="$($PRINTF '%s\nnat-anchor "%s"\nrdr-anchor "%s"\n' "$translation" "$base_anchor" "$base_anchor")"
+    filtering="$($PRINTF '%s\nanchor "%s"\n' "$filtering" "$base_anchor")"
+    parent_rules="$($PRINTF '%s\n%s\n%s\n' "$normalization" "$translation" \
+        "$filtering")"
+    $ECHO "$parent_rules"| $PFCTL -f - $parent_anchor
+    $ECHO "$2" | $PFCTL -f - -a "$1"
+    unset parent_anchor
+    unset base_anchor
+    unset normalization
+    unset translation
+    unset filtering
+    unset parent_rules
+}
+
+# ========================================
+function unloadAnchor () {
+# ========================================
+    $ECHO ""
+    $ECHO "Removing anchor $1"
+    $PFCTL -a $1 -Fa
+    local normalization=$($PFCTL -sr | $GREP scrub)
+    local translation=$($PFCTL -sn)
+    local filtering=$($PFCTL -sr | $GREP -v scrub)
+    normalization="$($ECHO "$normalization" | $GREP -v "$REVERSE_DOMAIN")"
+    translation="$($ECHO "$translation" | $GREP -v "$REVERSE_DOMAIN")"
+    filtering="$($ECHO "$filtering" | $GREP -v "$REVERSE_DOMAIN")"
+    local new_rules=$($PRINTF '%s\n%s\n%s\n' "$normalization" "$translation" "$filtering")
+    $ECHO "$new_rules"| $PFCTL -f -
+}
+
+# ========================================
+function loadDefaultRules () {
+# ========================================
+    $ECHO ""
+    $ECHO "Loading ${DEFAULT_RULES_FILE} under anchor ${REVERSE_DOMAIN}"
+    if checkFilePerms "$DEFAULT_RULES_FILE"; then
+        loadAnchor "$REVERSE_DOMAIN" "$($CAT "$DEFAULT_RULES_FILE")"
+    else
+        $ECHO "${DEFAULT_RULES_FILE} is not loaded (Unsafe permissions)."
+        disablePfctl
+        exit
+    fi
 }
 
 # ========================================
 function loadCustomRules () {
 # ========================================
-    FILES_TO_LOAD=( "$MACROS_FILE" )
-    
-    # Add custom rule file
-    if [[ -f "$CUSTOM_RULES_FILE" ]]; then
-    $ECHO ""
-    $ECHO "Loading $CUSTOM_RULES_FILE:"
-    if checkFilePerms "$CUSTOM_RULES_FILE"; then
-        $ECHO "---> $CUSTOM_RULES_FILE"
-        FILES_TO_LOAD=( "${FILES_TO_LOAD[@]}" "$CUSTOM_RULES_FILE" )
-    fi
-    fi
-    
-    # Add each file in custom rule directory
-    $ECHO ""
-    $ECHO "Loading rule files in /etc/pf.anchors/REVERSE_DOMAIN.pf.d/"
-    shopt -s nullglob
-    DID_FIND_CUSTOMRULE_FILES=0
-    CUSTOM_RULES=$CONF_DIR_CUSTOM/*
-    for f in $CUSTOM_RULES
-    do
-    if checkFilePerms "$f"; then
-        $ECHO "---> $f"
-        FILES_TO_LOAD=( "${FILES_TO_LOAD[@]}" "$f" )
-        DID_FIND_CUSTOMRULE_FILES=1
-    fi
+    for rule in "${CUSTOM_RULES_D}"/*; do
+        local anchor_name=$($BASENAME -s .pf $($BASENAME -s .conf "$rule"))
+        $ECHO "Loading $rule under anchor ${REVERSE_DOMAIN}/$anchor_name"
+        if checkFilePerms "$rule"; then
+            loadAnchor "${REVERSE_DOMAIN}/${anchor_name}" "$($CAT "$rule")"
+        else
+            $ECHO "${rule} is not loaded (Unsafe permissions)."
+        fi
     done
-    shopt -u nullglob
-    [ $DID_FIND_CUSTOMRULE_FILES -eq 0 ] && $ECHO "---> Directory is empty"
-    
-    # Read all files that passed permissions check
-    # and feed the results to pfctl
-    cat ${FILES_TO_LOAD[@]} | $PFCTL -a "REVERSE_DOMAIN.pf/custom" -f- > /dev/null 2>&1
+}
+
+# ========================================
+function unloadDefaultRules () {
+# ========================================
+    unloadAnchor "${REVERSE_DOMAIN}"
+}
+
+# ========================================
+function unloadCustomRules () {
+# ========================================
+    unloadAnchor "${REVERSE_DOMAIN}/*"
 }
 
 # ========================================
@@ -183,17 +235,20 @@ function showCurrentRules () {
 # ========================================
     $ECHO ""
     $ECHO "Current rules:"
+    $PFCTL -sn
     $PFCTL -a '*' -sr
 }
 
 # ========================================
-function configureKernelParameters () {
+function configureSystem () {
 # ========================================
     $SYSCTL -w net.inet.ip.fw.enable=1 > /dev/null 2>&1
     $SYSCTL -w net.inet.ip.fw.verbose=2 > /dev/null 2>&1
     $SYSCTL -w net.inet6.ip6.fw.verbose=0 > /dev/null 2>&1
     $SYSCTL -w net.inet.ip.fw.verbose_limit=0 > /dev/null 2>&1
-    $SYSCTL -w net.inet.ip.forwarding=0 > /dev/null 2>&1
+    $SYSCTL -w net.inet.ip.forwarding=1 > /dev/null 2>&1
+    $SYSCTL -w net.inet6.ip6.forwarding=1 > /dev/null 2>&1
+    $IFCONFIG pflog0 create
 }
 
 
@@ -228,18 +283,24 @@ else
     verifyFiles
     
     if [[ $OP_MODE == "start" ]]; then
-        configureKernelParameters
+        configureSystem
         enablePfctl
+        loadDefaultRules
         loadCustomRules
         showCurrentRules
     
     elif [[ $OP_MODE == "stop" ]]; then
+        unloadCustomRules
+        unloadDefaultRules
         disablePfctl
     
     elif [[ $OP_MODE == "restart" ]]; then
-        configureKernelParameters
+        configureSystem
+        unloadCustomRules
+        unloadDefaultRules
         disablePfctl
         enablePfctl
+        loadDefaultRules
         loadCustomRules
         showCurrentRules
     

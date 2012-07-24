@@ -1,0 +1,24 @@
+# =====================================================
+#   REVERSE_DOMAIN.pf.macros
+#
+#   Macros for Packet Filter
+#
+#   Hannes Juutilainen <hjuutilainen@mac.com>
+#   https://github.com/hjuutilainen/pf-conf
+#
+#   History:
+#   2012-05-28 Hannes Juutilainen: Initial Version
+# =====================================================
+
+# These are just more descriptive names for common interfaces.
+# NOTE: They may not match up correctly for your hardware configuration,
+# ex: a Mac Pro has two Ethernet interfaces so wifi would actually be en2.
+loopback = "lo0"
+wired = "en0"
+wifi = "en1"
+firewire = "fw0"
+tunnels = "{ gif0 stf0 }"
+bluetooth = "p2p0"
+
+# RFC 1918 Private IP addresses.
+table <rfc1918> const { 192.168.0.0/16, 172.16.0.0/12, 10.0.0.0/8 }

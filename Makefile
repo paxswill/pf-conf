@@ -30,15 +30,12 @@ PRODUCTSIGN ?= $(shell xcrun -find productsign)
 SIGNER := $(shell security find-identity -p codesigning -v | grep -o -e '".*"$$')
 
 # M4 input files
-M4PREP = "m4_define(\`TITLE',\`$(TITLE)')m4_define(\`REVERSE_DOMAIN',\`$(REVERSE_DOMAIN)')m4_changequote(\`',\`')m4_dnl"
+M4PREP = "m4_define(\`TITLE',\`$(TITLE)')m4_define(\`DOMAIN_TOKEN',\`$(REVERSE_DOMAIN)')m4_changequote(\`',\`')m4_dnl"
 M4FILES := $(subst .in,,$(wildcard *.in))
 $(info M4Files: $(M4FILES))
 intermediates := $(M4FILES)
 %: %.in
 	echo $(M4PREP) | cat - $< | m4 -P - > $@
-
-%.d:
-	mkdir -p $@
 
 # A canned recipe for staging
 stage = mkdir -p $(dir $@) && cp $< $@
@@ -47,17 +44,18 @@ stage = mkdir -p $(dir $@) && cp $< $@
 DESTROOT := destroot
 
 # Stage the launchd property list
+STAGED += $(DESTROOT)/Library/LaunchDaemons/$(REVERSE_DOMAIN).pf.plist
 $(DESTROOT)/Library/LaunchDaemons/$(REVERSE_DOMAIN).pf.plist: pf.plist
 	$(stage)
 
-# Stage the anchors
-anchors := $(DESTROOT)/etc/pf.anchors/$(REVERSE_DOMAIN)
-staged_anchors := $(addprefix $(anchors).pf.,macros rules)
-STAGED += $(staged_anchors)
-$(staged_anchors): $(anchors).%: %
+# Stage the rules
+rule := $(DESTROOT)/etc/pf.anchors/$(REVERSE_DOMAIN)
+STAGED += $(rule)
+$(rule): rules
 	$(stage)
-STAGED += $(anchors).pf.d
-$(anchors).pf.d:
+STAGED += $(rule).macros
+$(rule).macros: macros
+	$(stage)
 
 # Stage the admin commands
 # Cancel conflicting builtin rules
@@ -70,11 +68,6 @@ $(staged_libexec): $(libexec)/%: %
 	$(stage)
 	chmod +x $@
 
-# Stage the main pf.conf file
-STAGED += $(DESTROOT)/etc/$(REVERSE_DOMAIN).pf.conf
-$(DESTROOT)/etc/$(REVERSE_DOMAIN).pf.conf: pf.conf
-	$(stage)
-
 # Stage the installer scripts
 SCRIPTSDIR := scripts
 scripts := postinstall preinstall
@@ -82,6 +75,8 @@ STAGED += $(addprefix $(SCRIPTSDIR)/,$(scripts))
 $(addprefix $(SCRIPTSDIR)/,$(scripts)): $(SCRIPTSDIR)/%: %
 	$(stage)
 	chmod +x $@
+
+destroot: $(STAGED)
 
 # Generate the component package
 intermediates += $(TITLE)-component.pkg
@@ -103,15 +98,15 @@ $(TITLE).pkg: $(TITLE)-component.pkg distribution.xml
 
 # Generate a signed package
 %-signed.pkg: %.pkg
-	$(PRODUCTSIGN) --sign "$(SIGNER)" $< $@
+	$(PRODUCTSIGN) --sign $(SIGNER) $< $@
 
 clean:
-	rm -rf $(DESTROOT) $(SCRIPTSDIR) *.pkg
+	rm -rf $(DESTROOT) $(STAGED) $(M4FILES) $(SCRIPTSDIR) *.pkg
 
 package: $(TITLE).pkg
 signed-package: $(TITLE)-signed.pkg
 
-.PHONY: clean package signed-package
+.PHONY: clean package signed-package destroot
 .DEFAULT_GOAL = package
 .INTERMEDIATE: $(intermediates)
 

@@ -1,0 +1,56 @@
+# =====================================================
+#   REVERSE_DOMAIN.pf.rules
+#
+#   Packet Filter defaults
+#
+#   Hannes Juutilainen <hjuutilainen@mac.com>
+#   https://github.com/hjuutilainen/pf-conf
+# =====================================================
+
+# =====================================================
+#   Macros
+# =====================================================
+include "/etc/pf.anchors/DOMAIN_TOKEN.macros"
+
+# =====================================================
+#   Filter rules
+# =====================================================
+
+# Don't filter on the loopback interface
+set skip on loopback
+
+# Scrub incoming packets
+# Clear the don't dragment bit and set a random IP ID number.
+# This works around possible issues with packets that have a zero IP ID and the
+# don't fargment bit set.
+scrub in all no-df random-id
+# Reassemble incoming fragments, primarily for NAT support.
+scrub in all fragment reassemble
+
+# Block by default
+block in all
+
+# Allow DHCP client operation
+pass in inet proto udp from any port bootps to (any:broadcast) port bootpc
+pass out inet proto udp from 0.0.0.0 port bootpc to (any:broadcast) port bootps
+
+# Allow DHCPv6 and the related IPv6 address resolution protocols
+pass in inet6 proto udp from any port dhcpv6-server to any port dhcpv6-client
+pass out inet6 proto udp from any port dhcpv6-client to any port dhcpv6-server
+# Neighbor Discovery Protocol (NDP)
+pass in inet6 proto ipv6-icmp from { ff02::1, fe80::/64 } to \
+	{ ff02::1, fe80::/24 }  icmp6-type {133, 134, 135, 136, 137}
+
+# Allow mDNS (Bonjour)
+pass proto udp from any to { 224.0.0.251 ff02::fb ff05::fb } port mdns
+
+# Allow ICMP Echo Requests (ping)
+pass in inet proto icmp all icmp-type 8
+pass out inet proto icmp all icmp-type 0
+pass in inet6 proto ipv6-icmp all icmp6-type 128
+pass out inet6 proto ipv6-icmp all icmp6-type 129
+
+# Antispoof
+antispoof for (wired)
+antispoof for (wifi)
+antispoof for (firewire)
