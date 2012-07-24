@@ -164,6 +164,18 @@ function unloadAnchor () {
     $ECHO ""
     $ECHO "Unloading anchor $1"
     $PFCTL -a $1 -Fa
+	$ECHO "Removing anchor $1 from the rules"
+	local normalization=$($PFCTL -sr | $GREP scrub)
+	local translation=$($PFCTL -sn)
+	local filtering=$($PFCTL -sr | $GREP -v scrub)
+	normalization="$($ECHO "$normalization" | $GREP -v "$REVERSE_DOMAIN")"
+	translation="$($ECHO "$translation" | $GREP -v "$REVERSE_DOMAIN")"
+	filtering="$($ECHO "$filtering" | $GREP -v "$REVERSE_DOMAIN")"
+	local new_rules=$($PRINTF '%s\n%s\n%s\n' "$normalization" "$translation" "$filtering")
+	$ECHO ""
+	$ECHO "Setting new rules to:"
+	$ECHO "$new_rules"
+	$ECHO "$new_rules"| $PFCTL -f -
 }
 
 # ========================================
