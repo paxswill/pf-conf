@@ -125,7 +125,8 @@ function enablePfctl () {
 # ========================================
     $ECHO ""
     $ECHO "Starting Packet Filter and reading default rules"
-    local token="`$PFCTL -E 2>&1 > /dev/null | $GREP -o -e '[0-9]*$' | $TR -d [:blank:]`"
+    # The line below is not a typo; the token is output on stderr, not stdout
+    local token="$($PFCTL -E 2>&1 >/dev/null | $GREP -o -e '[0-9]*$' | $TR -d '\n')"
     $ECHO "Packet Filter Token: $token"
     $ECHO "$token" > "$TOKEN_FILE"
 }
@@ -136,10 +137,10 @@ function disablePfctl () {
     $ECHO ""
     $ECHO "Disabling Packet Filter"
     if [[ -r $TOKEN_FILE ]]; then
-        $PFCTL -X `$CAT "$TOKEN_FILE"`
+        $PFCTL -X `$CAT "$TOKEN_FILE"` >/dev/null 2>&1
         $RM "$TOKEN_FILE"
     else
-        $PFCTL -d
+        $PFCTL -d >/dev/null 2>&1
     fi
 }
 
