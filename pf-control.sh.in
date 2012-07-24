@@ -226,6 +226,7 @@ function showCurrentRules () {
 # ========================================
     $ECHO ""
     $ECHO "Current rules:"
+    $PFCTL -sn
     $PFCTL -a '*' -sr
 }
 
