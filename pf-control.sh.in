@@ -224,7 +224,8 @@ function configureKernelParameters () {
     $SYSCTL -w net.inet.ip.fw.verbose=2 > /dev/null 2>&1
     $SYSCTL -w net.inet6.ip6.fw.verbose=0 > /dev/null 2>&1
     $SYSCTL -w net.inet.ip.fw.verbose_limit=0 > /dev/null 2>&1
-    $SYSCTL -w net.inet.ip.forwarding=0 > /dev/null 2>&1
+    $SYSCTL -w net.inet.ip.forwarding=1 > /dev/null 2>&1
+    $SYSCTL -w net.inet6.ip6.forwarding=1 > /dev/null 2>&1
 }
 
 
