@@ -29,6 +29,7 @@ scrub in all fragment reassemble
 
 # Block by default
 block in all
+pass out all
 
 # Allow DHCP client operation
 pass in inet proto udp from any port bootps to (any:broadcast) port bootpc
