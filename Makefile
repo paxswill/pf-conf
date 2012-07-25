@@ -32,7 +32,6 @@ SIGNER := $(shell security find-identity -p codesigning -v | grep -o -e '".*"$$'
 # M4 input files
 M4PREP = "m4_define(\`TITLE',\`$(TITLE)')m4_define(\`DOMAIN_TOKEN',\`$(REVERSE_DOMAIN)')m4_changequote(\`',\`')m4_dnl"
 M4FILES := $(subst .in,,$(wildcard *.in))
-$(info M4Files: $(M4FILES))
 intermediates := $(M4FILES)
 %: %.in
 	echo $(M4PREP) | cat - $< | m4 -P - > $@
